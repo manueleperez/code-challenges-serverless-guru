@@ -83,12 +83,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: CreateItemFunction
-      Handler: createItem.handler
+      Handler: src/index.createItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: your-s3-bucket-name
+        S3Bucket: code-challengest-serverless-guru
         S3Key: lambda-code.zip
       Environment:
         Variables:
@@ -121,12 +121,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: ReadItemFunction
-      Handler: readItem.handler
+      Handler: src/index.readItemHandler
       Runtime: nodejs18.x
       Timeout: 10
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: your-s3-bucket-name
+        S3Bucket: code-challengest-serverless-guru
         S3Key: lambda-code.zip
       Environment:
         Variables:
@@ -159,12 +159,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: UpdateItemFunction
-      Handler: updateItem.handler
+      Handler: src/index.updateItemHandler
       Runtime: nodejs18.x
       Timeout: 10
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: your-s3-bucket-name
+        S3Bucket: code-challengest-serverless-guru
         S3Key: lambda-code.zip
       Environment:
         Variables:
@@ -197,12 +197,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: DeleteItemFunction
-      Handler: deleteItem.handler
+      Handler: src/index.deleteItemHandler
       Runtime: nodejs18.x
       Timeout: 10
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: your-s3-bucket-name
+        S3Bucket: code-challengest-serverless-guru
         S3Key: lambda-code.zip
       Environment:
         Variables:
@@ -235,7 +235,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: ListItemsFunction
-      Handler: listItems.handler
+      Handler: src/index.listItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
       Role: !GetAtt LambdaExecutionRole.Arn

@@ -1,0 +1,269 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CRUD API Gateway + Lambda + DynamoDB
+
+Resources:
+
+  ############################
+  # DynamoDB Table
+  ############################
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ItemsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  ############################
+  # IAM Role for Lambda
+  ############################
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaCrudExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaCrudPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                Resource: !GetAtt ItemsTable.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  ############################
+  # API Gateway (REST API)
+  ############################
+  ItemsApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: ItemsApi
+
+  ItemsApiRoot:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ParentId: !GetAtt ItemsApi.RootResourceId
+      PathPart: items
+
+  ItemsApiItem:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ParentId: !Ref ItemsApiRoot
+      PathPart: "{id}"
+
+  ############################
+  # Lambda Functions
+  ############################
+
+  # CREATE
+  CreateItemFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: CreateItemFunction
+      Handler: createItem.handler
+      Runtime: nodejs18.x
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: your-s3-bucket-name
+        S3Key: lambda-code.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+
+  CreateItemMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ResourceId: !Ref ItemsApiRoot
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItemFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  CreateItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CreateItemFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/POST/items
+
+  # READ
+  ReadItemFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ReadItemFunction
+      Handler: readItem.handler
+      Runtime: nodejs18.x
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: your-s3-bucket-name
+        S3Key: lambda-code.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+
+  ReadItemMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ResourceId: !Ref ItemsApiItem
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReadItemFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  ReadItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReadItemFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/GET/items/*
+
+  # UPDATE
+  UpdateItemFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: UpdateItemFunction
+      Handler: updateItem.handler
+      Runtime: nodejs18.x
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: your-s3-bucket-name
+        S3Key: lambda-code.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+
+  UpdateItemMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ResourceId: !Ref ItemsApiItem
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateItemFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  UpdateItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UpdateItemFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/PUT/items/*
+
+  # DELETE
+  DeleteItemFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: DeleteItemFunction
+      Handler: deleteItem.handler
+      Runtime: nodejs18.x
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: your-s3-bucket-name
+        S3Key: lambda-code.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+
+  DeleteItemMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ResourceId: !Ref ItemsApiItem
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItemFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  DeleteItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DeleteItemFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/DELETE/items/*
+
+  # LIST
+  ListItemsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ListItemsFunction
+      Handler: listItems.handler
+      Runtime: nodejs18.x
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: your-s3-bucket-name
+        S3Key: lambda-code.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+
+  ListItemsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ItemsApi
+      ResourceId: !Ref ItemsApiRoot
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListItemsFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  ListItemsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ListItemsFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/

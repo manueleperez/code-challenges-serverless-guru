@@ -1,0 +1,56 @@
+service: items-api
+frameworkVersion: "4"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  timeout: 30   # 👈 aumenta el tiempo (30s en local)
+  environment:
+    TABLE_NAME: ItemsTable
+
+functions:
+  createItem:
+    handler: src/index.createItemHandler
+    events:
+      - httpApi:
+          path: /items
+          method: post
+
+  deleteItem:
+    handler: src/index.deleteItemHandler
+    events:
+      - httpApi:
+          path: /items/{id}
+          method: delete
+
+  getItem:
+    handler: src/index.getItemHandler
+    events:
+      - httpApi:
+          path: /items/{id}
+          method: get
+
+  updateItem:
+    handler: src/index.updateItemHandler
+    events:
+      - httpApi:
+          path: /items/{id}
+          method: put
+
+  listItems:
+    handler: src/index.listItemsHandler
+    events:
+      - httpApi:
+          path: /items
+          method: get
+custom:
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: false
+      migrate: true
+
+plugins:
+  - serverless-offline  
+

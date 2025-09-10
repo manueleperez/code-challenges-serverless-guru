@@ -1,15 +1,49 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodePipeline que despliega Infra y API en dev, test, prod
+Description: CodePipeline que despliega Infra y API en dev, test, prod con CodeBuild
 
 Resources:
 
   ##########################
-  # Role para CodePipeline
+  # Roles para CodePipeline
   ##########################
-  CodePipelineRole:
+  CodePipelineRoleDev:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: CodePipelineServiceRole
+      RoleName: CodePipelineServiceRole-dev
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  CodePipelineRoleTest:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineServiceRole-test
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  CodePipelineRoleProd:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineServiceRole-prod
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -24,28 +58,112 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
 
   ##########################
-  # Artifact Store (S3)
+  # Role para CodeBuild
   ##########################
-  PipelineArtifactBucket:
-    Type: AWS::S3::Bucket
+  CodeBuildRole:
+    Type: AWS::IAM::Role
     Properties:
-      BucketName: !Sub codepipeline-artifacts-${AWS::AccountId}-${AWS::Region}
+      RoleName: CodeBuildServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
 
   ##########################
-  # CodePipeline
+  # Buckets de artifacts
   ##########################
-  DeploymentPipeline:
+  PipelineArtifactBucketDev:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub codepipeline-artifacts-${AWS::AccountId}-${AWS::Region}-dev
+
+  PipelineArtifactBucketTest:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub codepipeline-artifacts-${AWS::AccountId}-${AWS::Region}-test
+
+  PipelineArtifactBucketProd:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub codepipeline-artifacts-${AWS::AccountId}-${AWS::Region}-prod
+
+  ##########################
+  # CodeBuild Projects DEV / TEST / PROD
+  ##########################
+  CodeBuildProjectDev:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: MiProyectoBuild-dev
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:6.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: STAGE
+            Value: dev
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 15
+
+  CodeBuildProjectTest:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: MiProyectoBuild-test
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:6.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: STAGE
+            Value: test
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 15
+
+  CodeBuildProjectProd:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: MiProyectoBuild-prod
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:6.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: STAGE
+            Value: prod
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 15
+
+  ##########################
+  # CodePipeline DEV
+  ##########################
+  DeploymentPipelineDev:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: ServerlessCrudPipeline
-      RoleArn: !GetAtt CodePipelineRole.Arn
+      Name: ServerlessCrudPipeline-dev
+      RoleArn: !GetAtt CodePipelineRoleDev.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref PipelineArtifactBucket
+        Location: !Ref PipelineArtifactBucketDev
       Stages:
         - Name: Source
           Actions:
-            - Name: GitHubSource
+            - Name: GitHubSourceDev
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -54,14 +172,13 @@ Resources:
               Configuration:
                 Owner: manueleperez
                 Repo: code-challenges-serverless-guru
-                Branch: main
+                Branch: dev
                 OAuthToken: "{{resolve:secretsmanager:github-token:SecretString:token}}"
               OutputArtifacts:
                 - Name: SourceOutput
-
         - Name: Build
           Actions:
-            - Name: CodeBuildAction
+            - Name: CodeBuildActionDev
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -72,11 +189,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: MiProyectoBuild
-
-        # -------------------
-        # Deploy en DEV
-        # -------------------
+                ProjectName: MiProyectoBuild-dev
         - Name: DeployInfraDev
           Actions:
             - Name: DeployInfraStackDev
@@ -92,7 +205,6 @@ Resources:
                 StackName: infra-dev
                 TemplatePath: BuildOutput::template/infra.yml
                 Capabilities: CAPABILITY_NAMED_IAM
-
         - Name: DeployApiDev
           Actions:
             - Name: DeployApiStackDev
@@ -108,9 +220,47 @@ Resources:
                 StackName: api-dev
                 TemplatePath: BuildOutput::template/api.yml
 
-        # -------------------
-        # Deploy en TEST
-        # -------------------
+  ##########################
+  # CodePipeline TEST
+  ##########################
+  DeploymentPipelineTest:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: ServerlessCrudPipeline-test
+      RoleArn: !GetAtt CodePipelineRoleTest.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucketTest
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHubSourceTest
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: manueleperez
+                Repo: code-challenges-serverless-guru
+                Branch: test
+                OAuthToken: "{{resolve:secretsmanager:github-token:SecretString:token}}"
+              OutputArtifacts:
+                - Name: SourceOutput
+        - Name: Build
+          Actions:
+            - Name: CodeBuildActionTest
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: MiProyectoBuild-test
         - Name: DeployInfraTest
           Actions:
             - Name: DeployInfraStackTest
@@ -126,7 +276,6 @@ Resources:
                 StackName: infra-test
                 TemplatePath: BuildOutput::template/infra.yml
                 Capabilities: CAPABILITY_NAMED_IAM
-
         - Name: DeployApiTest
           Actions:
             - Name: DeployApiStackTest
@@ -142,9 +291,47 @@ Resources:
                 StackName: api-test
                 TemplatePath: BuildOutput::template/api.yml
 
-        # -------------------
-        # Deploy en PROD
-        # -------------------
+  ##########################
+  # CodePipeline PROD
+  ##########################
+  DeploymentPipelineProd:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: ServerlessCrudPipeline-prod
+      RoleArn: !GetAtt CodePipelineRoleProd.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucketProd
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHubSourceProd
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: manueleperez
+                Repo: code-challenges-serverless-guru
+                Branch: main
+                OAuthToken: "{{resolve:secretsmanager:github-token:SecretString:token}}"
+              OutputArtifacts:
+                - Name: SourceOutput
+        - Name: Build
+          Actions:
+            - Name: CodeBuildActionProd
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: MiProyectoBuild-prod
         - Name: DeployInfraProd
           Actions:
             - Name: DeployInfraStackProd
@@ -160,7 +347,6 @@ Resources:
                 StackName: infra-prod
                 TemplatePath: BuildOutput::template/infra.yml
                 Capabilities: CAPABILITY_NAMED_IAM
-
         - Name: DeployApiProd
           Actions:
             - Name: DeployApiStackProd
@@ -177,7 +363,9 @@ Resources:
                 TemplatePath: BuildOutput::template/api.yml
 
 Outputs:
-  PipelineName:
-    Value: !Ref DeploymentPipeline
-    Export:
-      Name: ServerlessCrudPipeline
+  PipelineDev:
+    Value: !Ref DeploymentPipelineDev
+  PipelineTest:
+    Value: !Ref DeploymentPipelineTest
+  PipelineProd:
+    Value: !Ref DeploymentPipelineProd

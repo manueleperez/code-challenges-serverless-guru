@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "Instalando dependencias..."
+      - npm ci
+      - npm install -g serverless
+  build:
+    commands:
+      - echo "Ejecutando pruebas..."
+      - npm test
+      - echo "Desplegando con Serverless en $STAGE..."
+      - npx serverless deploy --stage $STAGE
+artifacts:
+  files:
+    - '**/*'

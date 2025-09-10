@@ -5,9 +5,17 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
-  timeout: 30   # 👈 aumenta el tiempo (30s en local)
+  timeout: 30   # aumenta el tiempo (30s en local)
   environment:
-    TABLE_NAME: ItemsTable
+    TABLE_NAME: ${self:custom.tableName}   # 👈 solo variables de entorno
+
+custom:
+  tableName: ItemsTable
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: false
+      migrate: true
 
 functions:
   createItem:
@@ -44,14 +52,21 @@ functions:
       - httpApi:
           path: /items
           method: get
-custom:
-  dynamodb:
-    start:
-      port: 8000
-      inMemory: false
-      migrate: true
 
 plugins:
   - serverless-offline
-  -  serverless-dynamodb-local
+  - serverless-dynamodb-local
 
+resources:
+  Resources:
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST

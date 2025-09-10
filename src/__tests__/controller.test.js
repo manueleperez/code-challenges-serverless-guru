@@ -2,35 +2,35 @@ import { jest } from "@jest/globals";
 import { of, throwError } from "rxjs";
 
 // 🔹 Definir mocks ANTES de importar controladores
-jest.unstable_mockModule("../src/service/createItem.service.js", () => ({
+jest.unstable_mockModule("../service/createItem.service.js", () => ({
   createItemService: jest.fn(),
 }));
-jest.unstable_mockModule("../src/service/getItem.service.js", () => ({
+jest.unstable_mockModule("../service/getItem.service.js", () => ({
   getItemService: jest.fn(),
 }));
-jest.unstable_mockModule("../src/service/updateItem.service.js", () => ({
+jest.unstable_mockModule("../service/updateItem.service.js", () => ({
   updateItemService: jest.fn(),
 }));
-jest.unstable_mockModule("../src/service/deleteItem.service.js", () => ({
+jest.unstable_mockModule("../service/deleteItem.service.js", () => ({
   deleteItemService: jest.fn(),
 }));
-jest.unstable_mockModule("../src/service/listItems.service.js", () => ({
+jest.unstable_mockModule("../service/listItems.service.js", () => ({
   listItemsService: jest.fn(),
 }));
 
 // 🔹 Import dinámico: los mocks ya están activos
-const { createItemController } = await import("../src/controller/createItem.controller.js");
-const { getItemController } = await import("../src/controller/getItem.controller.js");
-const { updateItemController } = await import("../src/controller/updateItem.controller.js");
-const { deleteItemController } = await import("../src/controller/deleteItem.controller.js");
-const { listItemsController } = await import("../src/controller/listItems.controller.js");
+const { createItemController } = await import("../controller/createItem.controller.js");
+const { getItemController } = await import("../controller/getItem.controller.js");
+const { updateItemController } = await import("../controller/updateItem.controller.js");
+const { deleteItemController } = await import("../controller/deleteItem.controller.js");
+const { listItemsController } = await import("../controller/listItems.controller.js");
 
 // 🔹 Importar servicios (mockeados arriba)
-const createService = await import("../src/service/createItem.service.js");
-const getService = await import("../src/service/getItem.service.js");
-const updateService = await import("../src/service/updateItem.service.js");
-const deleteService = await import("../src/service/deleteItem.service.js");
-const listService = await import("../src/service/listItems.service.js");
+const createService = await import("../service/createItem.service.js");
+const getService = await import("../service/getItem.service.js");
+const updateService = await import("../service/updateItem.service.js");
+const deleteService = await import("../service/deleteItem.service.js");
+const listService = await import("../service/listItems.service.js");
 
 describe("Controller Layer", () => {
   beforeAll(() => {

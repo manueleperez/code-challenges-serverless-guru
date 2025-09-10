@@ -2,7 +2,7 @@ import { of, throwError } from "rxjs";
 import { jest } from "@jest/globals";
 
 // 🔹 Mock del repository con ESM
-jest.unstable_mockModule("../src/repository/repository.js", () => ({
+jest.unstable_mockModule("../repository/repository.js", () => ({
   putItem: jest.fn(),
   getItem: jest.fn(),
   updateItem: jest.fn(),
@@ -11,12 +11,12 @@ jest.unstable_mockModule("../src/repository/repository.js", () => ({
 }));
 
 // 🔹 Import dinámico después de definir mocks
-const repository = await import("../src/repository/repository.js");
-const { createItemService } = await import("../src/service/createItem.service.js");
-const { getItemService } = await import("../src/service/getItem.service.js");
-const { updateItemService } = await import("../src/service/updateItem.service.js");
-const { deleteItemService } = await import("../src/service/deleteItem.service.js");
-const { listItemsService } = await import("../src/service/listItems.service.js");
+const repository = await import("../repository/repository.js");
+const { createItemService } = await import("../service/createItem.service.js");
+const { getItemService } = await import("../service/getItem.service.js");
+const { updateItemService } = await import("../service/updateItem.service.js");
+const { deleteItemService } = await import("../service/deleteItem.service.js");
+const { listItemsService } = await import("../service/listItems.service.js");
 
 describe("Service Layer", () => {
   const table = "ItemsTable";

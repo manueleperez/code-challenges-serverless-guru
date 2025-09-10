@@ -1,5 +1,33 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: API Gateway + Lambdas CRUD conectados a DynamoDB
+Description: API Gateway + Lambdas CRUD conectados a DynamoDB (sin AWS_PROXY)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+    Description: Nombre del ambiente a desplegar (dev, qa, prod)
+
+  LambdaCodeBucketName:
+    Type: String
+    Description: S3 bucket donde está el código de las lambdas
+
+  LambdaCodeKey:
+    Type: String
+    Default: lambda-code.zip
+    Description: Nombre del archivo zip de la lambda en S3
+
+  LambdaExecutionRoleArn:
+    Type: String
+    Description: ARN del rol de ejecución para las lambdas
+
+  ItemsTableName:
+    Type: String
+    Default: ItemsTable
+    Description: Nombre de la tabla DynamoDB
 
 Resources:
 
@@ -9,7 +37,7 @@ Resources:
   ItemsApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: ItemsApi
+      Name: !Sub ItemsApi-${Environment}
 
   ItemsApiRoot:
     Type: AWS::ApiGateway::Resource
@@ -31,17 +59,17 @@ Resources:
   CreateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: CreateItemFunction
+      FunctionName: !Sub CreateItemFunction-${Environment}
       Handler: src/index.createItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !ImportValue LambdaExecutionRoleArn
+      Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !ImportValue LambdaCodeBucketName
-        S3Key: lambda-code.zip
+        S3Bucket: !Ref LambdaCodeBucketName
+        S3Key: !Ref LambdaCodeKey
       Environment:
         Variables:
-          TABLE_NAME: !ImportValue ItemsTableName
+          TABLE_NAME: !Ref ItemsTableName
 
   CreateItemMethod:
     Type: AWS::ApiGateway::Method
@@ -51,9 +79,20 @@ Resources:
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
+        Type: AWS
         IntegrationHttpMethod: POST
-        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItemFunction.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "operation": "create",
+              "body": $input.body
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                $input.body
       MethodResponses:
         - StatusCode: 200
 
@@ -71,17 +110,17 @@ Resources:
   ReadItemFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: ReadItemFunction
+      FunctionName: !Sub ReadItemFunction-${Environment}
       Handler: src/index.readItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !ImportValue LambdaExecutionRoleArn
+      Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !ImportValue LambdaCodeBucketName
-        S3Key: lambda-code.zip
+        S3Bucket: !Ref LambdaCodeBucketName
+        S3Key: !Ref LambdaCodeKey
       Environment:
         Variables:
-          TABLE_NAME: !ImportValue ItemsTableName
+          TABLE_NAME: !Ref ItemsTableName
 
   ReadItemMethod:
     Type: AWS::ApiGateway::Method
@@ -91,9 +130,20 @@ Resources:
       HttpMethod: GET
       AuthorizationType: NONE
       Integration:
+        Type: AWS
         IntegrationHttpMethod: POST
-        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReadItemFunction.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "operation": "read",
+              "id": "$input.params('id')"
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                $input.body
       MethodResponses:
         - StatusCode: 200
 
@@ -111,17 +161,17 @@ Resources:
   UpdateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: UpdateItemFunction
+      FunctionName: !Sub UpdateItemFunction-${Environment}
       Handler: src/index.updateItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !ImportValue LambdaExecutionRoleArn
+      Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !ImportValue LambdaCodeBucketName
-        S3Key: lambda-code.zip
+        S3Bucket: !Ref LambdaCodeBucketName
+        S3Key: !Ref LambdaCodeKey
       Environment:
         Variables:
-          TABLE_NAME: !ImportValue ItemsTableName
+          TABLE_NAME: !Ref ItemsTableName
 
   UpdateItemMethod:
     Type: AWS::ApiGateway::Method
@@ -131,9 +181,21 @@ Resources:
       HttpMethod: PUT
       AuthorizationType: NONE
       Integration:
+        Type: AWS
         IntegrationHttpMethod: POST
-        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateItemFunction.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "operation": "update",
+              "id": "$input.params('id')",
+              "body": $input.body
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                $input.body
       MethodResponses:
         - StatusCode: 200
 
@@ -151,17 +213,17 @@ Resources:
   DeleteItemFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: DeleteItemFunction
+      FunctionName: !Sub DeleteItemFunction-${Environment}
       Handler: src/index.deleteItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !ImportValue LambdaExecutionRoleArn
+      Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !ImportValue LambdaCodeBucketName
-        S3Key: lambda-code.zip
+        S3Bucket: !Ref LambdaCodeBucketName
+        S3Key: !Ref LambdaCodeKey
       Environment:
         Variables:
-          TABLE_NAME: !ImportValue ItemsTableName
+          TABLE_NAME: !Ref ItemsTableName
 
   DeleteItemMethod:
     Type: AWS::ApiGateway::Method
@@ -171,9 +233,20 @@ Resources:
       HttpMethod: DELETE
       AuthorizationType: NONE
       Integration:
+        Type: AWS
         IntegrationHttpMethod: POST
-        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItemFunction.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "operation": "delete",
+              "id": "$input.params('id')"
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                $input.body
       MethodResponses:
         - StatusCode: 200
 
@@ -191,17 +264,17 @@ Resources:
   ListItemsFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: ListItemsFunction
+      FunctionName: !Sub ListItemsFunction-${Environment}
       Handler: src/index.listItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !ImportValue LambdaExecutionRoleArn
+      Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !ImportValue LambdaCodeBucketName
-        S3Key: lambda-code.zip
+        S3Bucket: !Ref LambdaCodeBucketName
+        S3Key: !Ref LambdaCodeKey
       Environment:
         Variables:
-          TABLE_NAME: !ImportValue ItemsTableName
+          TABLE_NAME: !Ref ItemsTableName
 
   ListItemsMethod:
     Type: AWS::ApiGateway::Method
@@ -211,9 +284,19 @@ Resources:
       HttpMethod: GET
       AuthorizationType: NONE
       Integration:
+        Type: AWS
         IntegrationHttpMethod: POST
-        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListItemsFunction.Arn}/invocations
+        RequestTemplates:
+          application/json: |
+            {
+              "operation": "list"
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                $input.body
       MethodResponses:
         - StatusCode: 200
 
@@ -229,4 +312,4 @@ Outputs:
   ApiId:
     Value: !Ref ItemsApi
     Export:
-      Name: ItemsApiId
+      Name: !Sub ItemsApiId-${Environment}

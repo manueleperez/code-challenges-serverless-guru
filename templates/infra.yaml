@@ -1,5 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Infraestructura base para CRUD (S3, DynamoDB, IAM)
+Description: Infraestructura base para CRUD (S3, DynamoDB, IAM) separada por ambiente
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Nombre del ambiente (dev, test, prod)
 
 Resources:
 
@@ -9,7 +19,7 @@ Resources:
   LambdaCodeBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: code-challengest-serverless-guru
+      BucketName: !Sub code-challenges-serverless-guru-${Environment}
 
   ############################
   # DynamoDB Table
@@ -17,7 +27,7 @@ Resources:
   ItemsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ItemsTable
+      TableName: !Sub ItemsTable-${Environment}
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -32,7 +42,7 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LambdaCrudExecutionRole
+      RoleName: !Sub LambdaCrudExecutionRole-${Environment}
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -41,7 +51,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: LambdaCrudPolicy
+        - PolicyName: !Sub LambdaCrudPolicy-${Environment}
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -64,14 +74,14 @@ Outputs:
   BucketName:
     Value: !Ref LambdaCodeBucket
     Export:
-      Name: LambdaCodeBucketName
+      Name: !Sub LambdaCodeBucketName-${Environment}
 
   TableName:
     Value: !Ref ItemsTable
     Export:
-      Name: ItemsTableName
+      Name: !Sub ItemsTableName-${Environment}
 
   LambdaExecutionRoleArn:
     Value: !GetAtt LambdaExecutionRole.Arn
     Export:
-      Name: LambdaExecutionRoleArn
+      Name: !Sub LambdaExecutionRoleArn-${Environment}

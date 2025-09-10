@@ -19,7 +19,7 @@ jest.unstable_mockModule("@aws-sdk/client-dynamodb", () => {
 });
 
 // 👇 importa el repo DESPUÉS de mockear
-const repository = await import("../src/repository/repository.js");
+const repository = await import("../repository/repository.js");
 
 describe("Repository Layer (RxJS)", () => {
   const table = "ItemsTable";

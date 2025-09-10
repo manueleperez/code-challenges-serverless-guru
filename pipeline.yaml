@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodePipeline que despliega Infra y API
+Description: CodePipeline que despliega Infra y API en dev, test, prod
 
 Resources:
 
@@ -52,9 +52,9 @@ Resources:
                 Provider: GitHub
                 Version: '1'
               Configuration:
-                Owner: manueleperez        # <-- cambia por tu org/usuario GitHub
-                Repo: code-challenges-serverless-guru # <-- cambia por tu repo
-                Branch: main               # <-- rama que dispara el pipeline
+                Owner: manueleperez
+                Repo: code-challenges-serverless-guru
+                Branch: main
                 OAuthToken: "{{resolve:secretsmanager:github-token:SecretString:token}}"
               OutputArtifacts:
                 - Name: SourceOutput
@@ -72,11 +72,14 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: MiProyectoBuild  # <-- el CodeBuild que definimos antes
+                ProjectName: MiProyectoBuild
 
-        - Name: DeployInfra
+        # -------------------
+        # Deploy en DEV
+        # -------------------
+        - Name: DeployInfraDev
           Actions:
-            - Name: DeployInfraStack
+            - Name: DeployInfraStackDev
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -86,13 +89,13 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ActionMode: CREATE_UPDATE
-                StackName: infra-stack
+                StackName: infra-dev
                 TemplatePath: BuildOutput::template/infra.yml
                 Capabilities: CAPABILITY_NAMED_IAM
 
-        - Name: DeployApi
+        - Name: DeployApiDev
           Actions:
-            - Name: DeployApiStack
+            - Name: DeployApiStackDev
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -102,7 +105,75 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ActionMode: CREATE_UPDATE
-                StackName: api-stack
+                StackName: api-dev
+                TemplatePath: BuildOutput::template/api.yml
+
+        # -------------------
+        # Deploy en TEST
+        # -------------------
+        - Name: DeployInfraTest
+          Actions:
+            - Name: DeployInfraStackTest
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: infra-test
+                TemplatePath: BuildOutput::template/infra.yml
+                Capabilities: CAPABILITY_NAMED_IAM
+
+        - Name: DeployApiTest
+          Actions:
+            - Name: DeployApiStackTest
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: api-test
+                TemplatePath: BuildOutput::template/api.yml
+
+        # -------------------
+        # Deploy en PROD
+        # -------------------
+        - Name: DeployInfraProd
+          Actions:
+            - Name: DeployInfraStackProd
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: infra-prod
+                TemplatePath: BuildOutput::template/infra.yml
+                Capabilities: CAPABILITY_NAMED_IAM
+
+        - Name: DeployApiProd
+          Actions:
+            - Name: DeployApiStackProd
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: api-prod
                 TemplatePath: BuildOutput::template/api.yml
 
 Outputs:

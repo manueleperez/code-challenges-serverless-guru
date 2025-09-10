@@ -15,6 +15,14 @@ Loguearse a Serverless
 
 npx serverless login
 
+Instalar 
+
+jest/global para los test
+
+npm install @jest/globals@30.1.2 --save-dev
+npm install rxjs@latest
+npm test
+
 Installar en Docker
 docker run -d --name dynamodb-local  -p 8000:8000 amazon/dynamodb-local
 

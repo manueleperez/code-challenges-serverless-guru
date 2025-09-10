@@ -1,56 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CRUD API Gateway + Lambda + DynamoDB
+Description: API Gateway + Lambdas CRUD conectados a DynamoDB
 
 Resources:
-
-  ############################
-  # DynamoDB Table
-  ############################
-  ItemsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ItemsTable
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
-  ############################
-  # IAM Role for Lambda
-  ############################
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: LambdaCrudExecutionRole
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: LambdaCrudPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:PutItem
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Scan
-                Resource: !GetAtt ItemsTable.Arn
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: "*"
 
   ############################
   # API Gateway (REST API)
@@ -75,10 +26,8 @@ Resources:
       PathPart: "{id}"
 
   ############################
-  # Lambda Functions
+  # CREATE Lambda
   ############################
-
-  # CREATE
   CreateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -86,13 +35,13 @@ Resources:
       Handler: src/index.createItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !ImportValue LambdaExecutionRoleArn
       Code:
-        S3Bucket: code-challengest-serverless-guru
+        S3Bucket: !ImportValue LambdaCodeBucketName
         S3Key: lambda-code.zip
       Environment:
         Variables:
-          TABLE_NAME: !Ref ItemsTable
+          TABLE_NAME: !ImportValue ItemsTableName
 
   CreateItemMethod:
     Type: AWS::ApiGateway::Method
@@ -116,7 +65,9 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/POST/items
 
-  # READ
+  ############################
+  # READ Lambda
+  ############################
   ReadItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -124,13 +75,13 @@ Resources:
       Handler: src/index.readItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !ImportValue LambdaExecutionRoleArn
       Code:
-        S3Bucket: code-challengest-serverless-guru
+        S3Bucket: !ImportValue LambdaCodeBucketName
         S3Key: lambda-code.zip
       Environment:
         Variables:
-          TABLE_NAME: !Ref ItemsTable
+          TABLE_NAME: !ImportValue ItemsTableName
 
   ReadItemMethod:
     Type: AWS::ApiGateway::Method
@@ -154,7 +105,9 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/GET/items/*
 
-  # UPDATE
+  ############################
+  # UPDATE Lambda
+  ############################
   UpdateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -162,13 +115,13 @@ Resources:
       Handler: src/index.updateItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !ImportValue LambdaExecutionRoleArn
       Code:
-        S3Bucket: code-challengest-serverless-guru
+        S3Bucket: !ImportValue LambdaCodeBucketName
         S3Key: lambda-code.zip
       Environment:
         Variables:
-          TABLE_NAME: !Ref ItemsTable
+          TABLE_NAME: !ImportValue ItemsTableName
 
   UpdateItemMethod:
     Type: AWS::ApiGateway::Method
@@ -192,7 +145,9 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/PUT/items/*
 
-  # DELETE
+  ############################
+  # DELETE Lambda
+  ############################
   DeleteItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -200,13 +155,13 @@ Resources:
       Handler: src/index.deleteItemHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !ImportValue LambdaExecutionRoleArn
       Code:
-        S3Bucket: code-challengest-serverless-guru
+        S3Bucket: !ImportValue LambdaCodeBucketName
         S3Key: lambda-code.zip
       Environment:
         Variables:
-          TABLE_NAME: !Ref ItemsTable
+          TABLE_NAME: !ImportValue ItemsTableName
 
   DeleteItemMethod:
     Type: AWS::ApiGateway::Method
@@ -230,7 +185,9 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/DELETE/items/*
 
-  # LIST
+  ############################
+  # LIST Lambda
+  ############################
   ListItemsFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -238,13 +195,13 @@ Resources:
       Handler: src/index.listItemsHandler
       Runtime: nodejs18.x
       Timeout: 10
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !ImportValue LambdaExecutionRoleArn
       Code:
-        S3Bucket: your-s3-bucket-name
+        S3Bucket: !ImportValue LambdaCodeBucketName
         S3Key: lambda-code.zip
       Environment:
         Variables:
-          TABLE_NAME: !Ref ItemsTable
+          TABLE_NAME: !ImportValue ItemsTableName
 
   ListItemsMethod:
     Type: AWS::ApiGateway::Method
@@ -266,4 +223,10 @@ Resources:
       FunctionName: !Ref ListItemsFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/GET/items
+
+Outputs:
+  ApiId:
+    Value: !Ref ItemsApi
+    Export:
+      Name: ItemsApiId

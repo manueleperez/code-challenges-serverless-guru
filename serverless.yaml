@@ -52,5 +52,6 @@ custom:
       migrate: true
 
 plugins:
-  - serverless-offline  
+  - serverless-offline
+  -  serverless-dynamodb-local
 

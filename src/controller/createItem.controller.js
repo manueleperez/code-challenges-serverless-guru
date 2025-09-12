@@ -4,8 +4,7 @@ import { lastValueFrom, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 export function createItemController(event) {
-  const item = JSON.parse(event.body); // espera JSON con id y name
-  console.debug(item);
+  const item = JSON.parse(event.body); // espera JSON con id y name  
   const tableName = process.env.TABLE_NAME;
 
   return lastValueFrom(

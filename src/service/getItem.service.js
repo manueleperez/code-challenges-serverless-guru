@@ -1,6 +1,7 @@
 // readItem.service.js
 import { getItem } from "../repository/repository.js";
 import { map,catchError } from "rxjs/operators";
+import { of } from "rxjs";
 
 export function getItemService(tableName, id) {
   return getItem(tableName, id).pipe(

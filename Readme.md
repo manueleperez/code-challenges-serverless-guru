@@ -21,7 +21,7 @@ npm test
 
 Cobertura de test 
 
-![test](./docs/testJests.png)
+![test](./docs/test-application.png)
 
 Installar en Docker el DynamoDB local para pruebas locales
 
@@ -43,6 +43,29 @@ npx serverless offline start
 Levantar API local
 npx serverless offline
 Starting Offline at http://localhost:3000
+
+![serverless](./docs/nxpserverless.png)
+
+
+Collections Postman Test
+
+![Collection Postman](./templates/Challenges-Serverless-Guru.postman_collection.json)
+
+Opciones de Postman
+
+![Collection Postman](./docs/postmanOptions.png)
+
+Create Item
+![Collection Postman Create](./docs/pushitem.png)
+Update Item
+![Collection Postman Update](./docs/updateitem.png)
+Delete Item
+![Collection Postman Delete](./docs/deleteitem.png)
+Get Item
+![Collection Postman Get](./docs/getitem.png)
+List Items
+![Collection Postman List](./docs/listitem.png)
+
 
 Templates de CloudFormation
 

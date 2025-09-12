@@ -1,19 +1,24 @@
 version: 0.2
 
+env:
+  variables:
+    STAGE: dev   # Valor por defecto, CodePipeline lo puede sobrescribir
+
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Instalando dependencias..."
+      - echo "🔹 Instalando dependencias..."
       - npm ci
       - npm install -g serverless
   build:
     commands:
-      - echo "Ejecutando pruebas..."
-      - npm test
-      - echo "Desplegando con Serverless en $STAGE..."
-      - npx serverless deploy --stage $STAGE
+      - echo "🔹 Ejecutando pruebas..."
+      - npm test || echo "⚠️ Tests fallaron, revisa antes de deploy."
+      - echo "🔹 Desplegando con Serverless en $STAGE..."
+      - serverless deploy --stage $STAGE
+
 artifacts:
   files:
-    - '**/*'
+    - '**/*

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodePipeline que despliega Infra y API en dev, test, prod con CodeBuild
+Description: CodePipeline que despliega solo API en dev, test, prod con CodeBuild
 
 Resources:
 
@@ -189,22 +189,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: MiProyectoBuild-dev
-        - Name: DeployInfraDev
-          Actions:
-            - Name: DeployInfraStackDev
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              InputArtifacts:
-                - Name: BuildOutput
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: infra-dev
-                TemplatePath: BuildOutput::template/infra.yml
-                Capabilities: CAPABILITY_NAMED_IAM
+                ProjectName: ServerlessGuruBuild-dev
         - Name: DeployApiDev
           Actions:
             - Name: DeployApiStackDev
@@ -260,22 +245,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: MiProyectoBuild-test
-        - Name: DeployInfraTest
-          Actions:
-            - Name: DeployInfraStackTest
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              InputArtifacts:
-                - Name: BuildOutput
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: infra-test
-                TemplatePath: BuildOutput::template/infra.yml
-                Capabilities: CAPABILITY_NAMED_IAM
+                ProjectName: ServerlessGuruBuild-test
         - Name: DeployApiTest
           Actions:
             - Name: DeployApiStackTest
@@ -331,22 +301,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: MiProyectoBuild-prod
-        - Name: DeployInfraProd
-          Actions:
-            - Name: DeployInfraStackProd
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              InputArtifacts:
-                - Name: BuildOutput
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: infra-prod
-                TemplatePath: BuildOutput::template/infra.yml
-                Capabilities: CAPABILITY_NAMED_IAM
+                ProjectName: ServerlessGuruBuild-prod
         - Name: DeployApiProd
           Actions:
             - Name: DeployApiStackProd

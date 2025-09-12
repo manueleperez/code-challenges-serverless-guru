@@ -1,12 +1,17 @@
 // readItem.service.js
 import { getItem } from "../repository/repository.js";
-import { map } from "rxjs/operators";
+import { map,catchError } from "rxjs/operators";
 
 export function getItemService(tableName, id) {
   return getItem(tableName, id).pipe(
     map(result => {
-      if (!result.Item) throw new Error("Item not found");
-      return { item: result.Item };
-    })
+      // Si el repositorio retorna un mensaje de "not found", propagamos ese mensaje
+      if (result.message) {
+        return { message: result.message };
+      }
+      // Si existe el item, lo retornamos
+      return { item: result };
+    }),
+    catchError(error => of({ message: "Error fetching item", error }))
   );
 }

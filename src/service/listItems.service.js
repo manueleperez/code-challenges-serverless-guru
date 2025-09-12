@@ -4,6 +4,13 @@ import { map } from "rxjs/operators";
 
 export function listItemsService(tableName) {
   return scanItems(tableName).pipe(
-    map(result => ({ items: result.Items || [] }))
+    map(result => {
+      // Si es un mensaje de "No items found", devolvemos items vacío
+      if (result.message) {
+        return { items: [] };
+      }
+      // Si es un array de items, lo retornamos directamente
+      return { items: result };
+    })
   );
 }

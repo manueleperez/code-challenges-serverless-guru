@@ -1,0 +1,36 @@
+# Nombre del workflow en GitHub Actions
+name: Trigger CodePipeline
+
+# 🔹 Evento que dispara el workflow:
+#    - Se ejecuta automáticamente en cada push a las ramas dev, test o main
+on:
+  push:
+    branches:
+      - dev      # Despliegue al ambiente de desarrollo
+      - test     # Despliegue al ambiente de pruebas
+      - main     # Despliegue al ambiente productivo
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest   # 🔹 Runner en Linux que ejecutará los pasos
+
+    steps:
+      # 1️⃣ Configuración de credenciales AWS
+      #    Usa secrets almacenados en GitHub (repositorio o organización)
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1   # Cambia si usas otra región
+
+      # 2️⃣ Disparo condicional de CodePipeline según la rama
+      - name: Disparar CodePipeline (según branch)
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "dev" ]]; then
+            aws codepipeline start-pipeline-execution --name DeploymentPipelineDev
+          elif [[ "${GITHUB_REF##*/}" == "test" ]]; then
+            aws codepipeline start-pipeline-execution --name DeploymentPipelineTest
+          elif [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            aws codepipeline start-pipeline-execution --name DeploymentPipelineProd
+          fi

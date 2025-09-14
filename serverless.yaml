@@ -1,3 +1,5 @@
+org: manuelenriqueperezuribe
+app: code-challege-serverless-guru
 service: items-api
 frameworkVersion: "4"
 

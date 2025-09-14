@@ -158,6 +158,7 @@ InfraEstructura CRUD aws
 Como ejecutar el deploy-infra.yaml que es la infractura
 
 Manualmente:
+
 sls deploy --stage %STAGE% -c templates/deploy-infra.yaml
 
 Automáticamente ejecutando estos archivos bat así

@@ -3,6 +3,8 @@ version: 0.2
 env:
   variables:
     STAGE: dev   # Valor por defecto, CodePipeline lo puede sobrescribir
+  secrets-manager:   # 👈 Opción más segura
+    SLS_ACCESS_KEY: ""
 
 phases:
   install:
@@ -10,15 +12,19 @@ phases:
       nodejs: 18
     commands:
       - echo "🔹 Instalando dependencias..."
-      - npm ci      
+      - npm ci
       - npm install -g serverless
+  pre_build:
+    commands:
+      - echo "🔹 Autenticando en Serverless Framework..."
+      - npx serverless login --token $SERVERLESS_ACCESS_KEY   # 👈 Login automático
   build:
     commands:
       - echo "🔹 Ejecutando pruebas..."
-      - npm test || echo " Tests fallaron, revisa antes de deploy."
+      - npm test || echo "⚠️ Tests fallaron, revisa antes de deploy."
       - echo "🔹 Desplegando con Serverless en $STAGE..."
-      - serverless deploy --stage $STAGE
+      - npx serverless deploy --stage $STAGE
 
 artifacts:
   files:
-    - '**/*
+    - '**/*'

@@ -6,7 +6,6 @@ Resources:
   ##########################
   # Roles para CodePipeline
   ##########################
-  # 🔹 Cada pipeline (dev/test/prod) tiene su propio rol para mayor aislamiento.
   CodePipelineRoleDev:
     Type: AWS::IAM::Role
     Properties:
@@ -78,7 +77,6 @@ Resources:
   ##########################
   # Buckets de artifacts
   ##########################
-  # 🔹 Cada pipeline guarda sus artefactos en un bucket diferente
   PipelineArtifactBucketDev:
     Type: AWS::S3::Bucket
     Properties:
@@ -97,11 +95,10 @@ Resources:
   ##########################
   # CodeBuild Projects (dev/test/prod)
   ##########################
-  # 🔹 Cada proyecto CodeBuild define la etapa (STAGE) como variable de entorno
   CodeBuildProjectDev:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: MiProyectoBuild-dev
+      Name: ServerlessGuruBuild-dev
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -114,12 +111,13 @@ Resources:
             Value: dev
       Source:
         Type: CODEPIPELINE
+        BuildSpec: templates/buildspec-dev.yaml   # 👈 específico de DEV
       TimeoutInMinutes: 15
 
   CodeBuildProjectTest:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: MiProyectoBuild-test
+      Name: ServerlessGuruBuild-test
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -132,12 +130,13 @@ Resources:
             Value: test
       Source:
         Type: CODEPIPELINE
+        BuildSpec: templates/buildspec-test.yaml   # 👈 específico de TEST
       TimeoutInMinutes: 15
 
   CodeBuildProjectProd:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: MiProyectoBuild-prod
+      Name: ServerlessGuruBuild-prod
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -150,12 +149,12 @@ Resources:
             Value: prod
       Source:
         Type: CODEPIPELINE
+        BuildSpec: templates/buildspec-prod.yaml   # 👈 específico de PROD
       TimeoutInMinutes: 15
 
   ##########################
   # CodePipeline DEV
   ##########################
-  # 🔹 Se ejecuta automáticamente en branch `dev`
   DeploymentPipelineDev:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -193,7 +192,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: ServerlessGuruBuild-dev
+                ProjectName: !Ref CodeBuildProjectDev
         - Name: DeployApiDev
           Actions:
             - Name: DeployApiStackDev
@@ -207,12 +206,11 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: api-dev
-                TemplatePath: BuildOutput::template/api.yml
+                TemplatePath: BuildOutput::templates/api.yml
 
   ##########################
   # CodePipeline TEST
   ##########################
-  # 🔹 Se ejecuta automáticamente en branch `test`
   DeploymentPipelineTest:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -250,7 +248,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: ServerlessGuruBuild-test
+                ProjectName: !Ref CodeBuildProjectTest
         - Name: DeployApiTest
           Actions:
             - Name: DeployApiStackTest
@@ -264,12 +262,11 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: api-test
-                TemplatePath: BuildOutput::template/api.yml
+                TemplatePath: BuildOutput::templates/api.yml
 
   ##########################
   # CodePipeline PROD
   ##########################
-  # 🔹 Se ejecuta automáticamente en branch `main`
   DeploymentPipelineProd:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -307,7 +304,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ProjectName: ServerlessGuruBuild-prod
+                ProjectName: !Ref CodeBuildProjectProd
         - Name: DeployApiProd
           Actions:
             - Name: DeployApiStackProd

@@ -11,7 +11,7 @@ on:
         options:
           - dev
           - test
-          - prod
+          - master
 
 jobs:
   deploy-infra:
@@ -28,7 +28,7 @@ jobs:
         run: npm install -g serverless
 
       - name: Deploy Infra
-        run: sls deploy --stage ${{ github.event.inputs.stage }} -c infra.yaml
+        run: sls deploy --stage ${{ github.event.inputs.stage }} -c templates/infra.yaml
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

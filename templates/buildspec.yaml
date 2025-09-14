@@ -4,7 +4,7 @@ env:
   variables:
     STAGE: dev   # Valor por defecto, CodePipeline lo puede sobrescribir
   secrets-manager:   # 👈 Opción más segura
-    SLS_ACCESS_KEY: ""
+    SERVERLESS_ACCESS_KEY: "nombre-del-secreto-en-AWS-Secrets-Manager"
 
 phases:
   install:

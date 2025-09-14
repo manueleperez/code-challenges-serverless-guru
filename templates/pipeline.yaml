@@ -1,5 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CodePipeline multi-stage (dev, test, prod) para API con CodeBuild + CloudFormation
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Nombre del ambiente (dev, test, prod)
+    # 🔹 Permite desplegar la misma infraestructura en distintos ambientes
+    #    usando un parámetro (ejemplo: dev, test, prod).
+    #    Esto afecta los nombres de recursos para evitar conflictos.
 
 Resources:
 
@@ -80,7 +92,7 @@ Resources:
   PipelineArtifactBucketDev:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub codepipeline-artifacts-${AWS::AccountId}-${AWS::Region}-dev
+      BucketName: !Sub code-challenges-serverless-guru-${Environment}
 
   PipelineArtifactBucketTest:
     Type: AWS::S3::Bucket

@@ -49,22 +49,51 @@ Starting Offline at http://localhost:3000
 
 Collections Postman Test
 
-![Collection Postman](./templates/Challenges-Serverless-Guru.postman_collection.json)
+![Collection Postman](./collections/Challenges-Serverless-Guru.postman_collection.json)
 
 Opciones de Postman
 
 ![Collection Postman](./docs/postmanOptions.png)
 
 Create Item
-![Collection Postman Create](./docs/pushitem.png)
+Add item
+
+![Collection Postman Create](./docs/createitem-ok-post.png)
+
+Duplicate item
+![Collection Postman Create](./docs/createitem-exists-post.png)
+
 Update Item
-![Collection Postman Update](./docs/updateitem.png)
+
+Update ok
+
+![Collection Postman Update](./docs/updateditem-ok.png)
+
+item no exist
+
+![Collection Postman Update](./docs/updateitem-not-exists.png)
+
 Delete Item
-![Collection Postman Delete](./docs/deleteitem.png)
+Ok
+![Collection Postman Delete](./docs/deleteitem-ok.png)
+item not found
+![Collection Postman Delete](./docs/deleteitem-notexists.png)
+
 Get Item
+Ok
 ![Collection Postman Get](./docs/getitem.png)
+
+Item not found
+
+![Collection Postman Get](./docs/getitemNotFound.png)
+
 List Items
-![Collection Postman List](./docs/listitem.png)
+
+![Collection Postman List](./docs/listsitems.png)
+
+DynamoDB 
+
+![DynamoDB](./docs/dynamoindocker.png)
 
 
 Templates de CloudFormation
@@ -84,6 +113,30 @@ Contrucción de Tabla de DynamoDB y el Bucket S3
 ![infra](./docs/infraII.png)
 ![infra](./docs/infraIII.png)
 
+Para disparar los pipelines automáticos desde .github/workflows/trigger-pipeline.ymal:
+
+
+En tu repositorio GitHub → Settings > Secrets and variables > Actions:
+
+Configura:
+
+AWS_ACCESS_KEY_ID
+
+AWS_SECRET_ACCESS_KEY
+
+Tus CodePipelines ya deben existir en AWS con los nombres:
+
+Dentro de pipeline.yaml ya existen estos pipelines internos
+
+DeploymentPipelineDev
+
+DeploymentPipelineTest
+
+DeploymentPipelineProd
+
+Cada vez que hagas git push origin dev (o test, o main) → se disparará el pipeline correcto en AWS automáticamente.
+
+
 Api 
 
 Donde se encuentra el apiGateway y las funciones lambda de nodejs
@@ -91,10 +144,21 @@ Donde se encuentra el apiGateway y las funciones lambda de nodejs
 ![api](./docs/api.png)
 
 
+
+Arquitectura Serverless
+
+![serverless](./docs/arquitectura-serverless-aws.png)
+
+InfraEstructura CRUD aws
+
+
+![infra estructura crud](./docs/infraestructura-crud-aws.png)
+
+
 Como ejecutar el deploy-infra.yaml que es la infractura
 
 Manualmente:
-sls deploy --stage %STAGE% -c deploy-infra.yaml
+sls deploy --stage %STAGE% -c templates/deploy-infra.yaml
 
 Automáticamente ejecutando estos archivos bat así
 
@@ -110,8 +174,6 @@ Construye el proyecto y despliega la aplicación
 
 La información de la IAC los templates se encuentran en la carpeta /template, en la raíz pipeline.yaml y en .github/workflows deploy.yaml que es el que dispara todo el proceso
 automático cuando se hace commit.
-
-
 
 
 

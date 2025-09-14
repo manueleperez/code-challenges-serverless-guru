@@ -11,4 +11,4 @@ echo ================================
 echo Desplegando infraestructura en %STAGE%
 echo ================================
 
-sls deploy --stage %STAGE% -c deploy-infra.yaml
+sls deploy --stage %STAGE% -c templates/deploy-infra.yaml

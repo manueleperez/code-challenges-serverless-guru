@@ -10,51 +10,63 @@ Parameters:
       - test
       - prod
     Description: Nombre del ambiente (dev, test, prod)
+    # 🔹 Permite desplegar la misma infraestructura en distintos ambientes
+    #    usando un parámetro (ejemplo: dev, test, prod).
+    #    Esto afecta los nombres de recursos para evitar conflictos.
 
 Resources:
 
   ############################
-  # S3 Bucket para Lambda Code
+  # S3 Bucket para almacenar el código de Lambda
   ############################
   LambdaCodeBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub code-challenges-serverless-guru-${Environment}
+      #  Cada ambiente tendrá un bucket único, ej:
+      #    - code-challenges-serverless-guru-dev
+      #    - code-challenges-serverless-guru-test
+      #    - code-challenges-serverless-guru-prod
 
   ############################
-  # DynamoDB Table
+  # DynamoDB Table para CRUD de items
   ############################
   ItemsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub ItemsTable-${Environment}
+      # Separa las tablas por ambiente (ItemsTable-dev, ItemsTable-test, etc.)
       AttributeDefinitions:
         - AttributeName: id
-          AttributeType: S
+          AttributeType: S   # La clave primaria será un string
       KeySchema:
         - AttributeName: id
-          KeyType: HASH
+          KeyType: HASH      # id se usa como clave de partición
       BillingMode: PAY_PER_REQUEST
+      #  Modo bajo demanda → no requiere provisionar capacidad.
 
   ############################
-  # IAM Role for Lambda
+  # IAM Role para ejecución de Lambda
   ############################
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub LambdaCrudExecutionRole-${Environment}
+      # Role diferenciado por ambiente
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
+              #  Solo los servicios de Lambda pueden asumir este role
             Action: sts:AssumeRole
       Policies:
         - PolicyName: !Sub LambdaCrudPolicy-${Environment}
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
+              #  Permisos sobre DynamoDB
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
@@ -63,6 +75,7 @@ Resources:
                   - dynamodb:DeleteItem
                   - dynamodb:Scan
                 Resource: !GetAtt ItemsTable.Arn
+              # Permisos para logs en CloudWatch
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -71,6 +84,7 @@ Resources:
                 Resource: "*"
 
 Outputs:
+  # Exporta los valores clave para ser reutilizados en otros stacks
   BucketName:
     Value: !Ref LambdaCodeBucket
     Export:

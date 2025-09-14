@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: API Gateway + Lambdas CRUD conectados a DynamoDB (sin AWS_PROXY)
 
 Parameters:
+  ############################
+  # Parámetros del Stack
+  ############################
   Environment:
     Type: String
     Default: dev
@@ -39,6 +42,7 @@ Resources:
     Properties:
       Name: !Sub ItemsApi-${Environment}
 
+  # Recurso raíz "/items"
   ItemsApiRoot:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -46,6 +50,7 @@ Resources:
       ParentId: !GetAtt ItemsApi.RootResourceId
       PathPart: items
 
+  # Recurso anidado "/items/{id}"
   ItemsApiItem:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -56,6 +61,7 @@ Resources:
   ############################
   # CREATE Lambda
   ############################
+  # Lambda para crear un ítem en DynamoDB
   CreateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -71,6 +77,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ItemsTableName
 
+  # Método POST /items
   CreateItemMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -81,6 +88,7 @@ Resources:
       Integration:
         Type: AWS
         IntegrationHttpMethod: POST
+        # Vincula API Gateway con la Lambda
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItemFunction.Arn}/invocations
         RequestTemplates:
           application/json: |
@@ -96,6 +104,7 @@ Resources:
       MethodResponses:
         - StatusCode: 200
 
+  # Permiso para que API Gateway invoque la Lambda
   CreateItemPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -107,6 +116,7 @@ Resources:
   ############################
   # READ Lambda
   ############################
+  # Lambda para leer un ítem por id
   ReadItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -122,6 +132,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ItemsTableName
 
+  # Método GET /items/{id}
   ReadItemMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -158,6 +169,7 @@ Resources:
   ############################
   # UPDATE Lambda
   ############################
+  # Lambda para actualizar un ítem por id
   UpdateItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -173,6 +185,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ItemsTableName
 
+  # Método PUT /items/{id}
   UpdateItemMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -210,6 +223,7 @@ Resources:
   ############################
   # DELETE Lambda
   ############################
+  # Lambda para eliminar un ítem por id
   DeleteItemFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -225,6 +239,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ItemsTableName
 
+  # Método DELETE /items/{id}
   DeleteItemMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -261,6 +276,7 @@ Resources:
   ############################
   # LIST Lambda
   ############################
+  # Lambda para listar todos los ítems
   ListItemsFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -276,6 +292,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ItemsTableName
 
+  # Método GET /items
   ListItemsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -309,6 +326,9 @@ Resources:
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/GET/items
 
 Outputs:
+  ############################
+  # Salidas del Stack
+  ############################
   ApiId:
     Value: !Ref ItemsApi
     Export:

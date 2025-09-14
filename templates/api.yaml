@@ -11,7 +11,7 @@ Parameters:
     AllowedValues:
       - dev
       - qa
-      - master
+      - prod
     Description: Nombre del ambiente a desplegar (dev, qa, prod)
 
   LambdaCodeBucketName:

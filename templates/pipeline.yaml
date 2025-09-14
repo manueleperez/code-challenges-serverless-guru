@@ -123,7 +123,7 @@ Resources:
             Value: dev
       Source:
         Type: CODEPIPELINE
-        BuildSpec: templates/buildspec-dev.yaml   # 👈 específico de DEV
+        BuildSpec: templates/buildspec.yaml   # 👈 específico de DEV
       TimeoutInMinutes: 15
 
   CodeBuildProjectTest:
@@ -161,7 +161,7 @@ Resources:
             Value: prod
       Source:
         Type: CODEPIPELINE
-        BuildSpec: templates/buildspec-prod.yaml   # 👈 específico de PROD
+        BuildSpec: templates/buildspec.yaml   # 👈 específico de PROD
       TimeoutInMinutes: 15
 
   ##########################
@@ -274,7 +274,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: api-test
-                TemplatePath: BuildOutput::templates/api.yml
+                TemplatePath: BuildOutput::templates/api.yaml
 
   ##########################
   # CodePipeline PROD

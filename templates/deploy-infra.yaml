@@ -11,7 +11,7 @@ on:
         options:
           - dev
           - test
-          - master
+          - prod
 
 jobs:
   deploy-infra:

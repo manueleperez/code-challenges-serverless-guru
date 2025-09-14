@@ -1,4 +1,9 @@
 
+Vídeo en Loom
+
+https://www.loom.com/share/7139aeff97f64a608cb502a8602d103c?sid=3a9db893-47c9-4738-b568-1b92dbc1e818
+
+
 Nodejs
 Construcción del proyecto
 npm init -y
